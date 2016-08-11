@@ -26,12 +26,12 @@ There are two required parameters for the configuration that must be supplied as
 
 #### Required
 | Name | Value | example |
-|-- | --| -- |
+|--- | ---| --- |
 | "filenames" | Comma seperated list of filepaths | "/path/to/vcf/file.vcf.gz,/path/to/another/file.vcf.gz"   |
 
 #### One of the following
 | Name | Value | example |
-|-- | --| -- |
+|--- | ---| --- |
 | "beconJsonFile" | Path to a json file that describes this beaon. The json file is a serialized representation of a beacon and must meet all the requirements of a normal beacon object. | "/path/to/beacon.json" |
 | "beaconJson" | Json string that describes this beacon | See below |
 
