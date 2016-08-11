@@ -1,0 +1,67 @@
+{
+  "id":"vcf_test_beacon",
+  "name":"vcf_test_beacon",
+  "apiVersion":"0.3",
+  "organization":{
+    "id":"vcf_org",
+    "name":"Vcf Adapter organization",
+    "description":"test organization for the vcf Beacon adapter",
+    "address":"99 Lambda Drive, Consumer, Canada",
+    "welcomeUrl":"www.welcome.com",
+    "contactUrl":"www.contact.com",
+    "logoUrl":"www.logo.com"
+  },
+  "description":"This beacon demonstrates the usage of the VcfBeaconAdapter",
+  "version":"1",
+  "welcomeUrl":"www.welcome.com",
+  "alternativeUrl":"www.alternative.com",
+  "createDateTime":"2016/07/23 19:23:11",
+  "updateDateTime":"2016/07/23 19:23:11",
+  "datasets":[
+    {
+      "id":"vcf-test-gt",
+      "name":"vcf-test-gt",
+      "description":"Vcf Adapter test dataset which includes sample / gt info",
+      "assemblyId":"grch37",
+      "createDateTime":"2016/07/23 19:23:11",
+      "updateDateTime":"2016/07/23 19:23:11",
+      "version":"1",
+      "variantCount":26,
+      "sampleCount":1,
+      "externalUrl":"www.external.com"
+    },
+    {
+      "id":"vcf-test-no-gt",
+      "name":"vcf-test-no-gt",
+      "description":"Vcf Adapter test dataset which includes no sample / gt info",
+      "assemblyId":"grch37",
+      "createDateTime":"2016/07/23 19:23:11",
+      "updateDateTime":"2016/07/23 19:23:11",
+      "version":"1",
+      "variantCount":46,
+      "sampleCount":0,
+      "externalUrl":"www.external.com"
+    }
+  ],
+  "sampleAlleleRequests":[
+    {
+      "referenceName":"20",
+      "start":76962,
+      "referenceBases":"T",
+      "alternateBases":"C",
+      "assemblyId":"grch37",
+      "datasetIds":["vcf-test-gt"],
+      "includeDatasetResponses":true
+
+    },
+    {
+      "referenceName":"1",
+      "start":10109,
+      "referenceBases":"A",
+      "alternateBases":"T",
+      "assemblyId":"grch37",
+      "datasetIds":["vcf-test-no-gt"],
+      "includeDatasetResponses":true
+    }
+  ]
+}
