@@ -53,7 +53,7 @@ public class VcfBeaconAdapterTest {
         AdapterConfig missingBeaconJson = new AdapterConfig(adapterConfig.getName(), adapterConfig.getAdapterClass(), adapterConfig
                 .getConfigValues()
                 .stream()
-                .filter(x -> !x.getName().equals("beaconJson"))
+                .filter(x -> !x.getName().equals("beaconJsonFile"))
                 .collect(Collectors.toList()));
         AdapterConfig missingFilename = new AdapterConfig(adapterConfig.getName(), adapterConfig.getAdapterClass(), adapterConfig
                 .getConfigValues()
@@ -178,7 +178,7 @@ public class VcfBeaconAdapterTest {
 
 
             values.add(new ConfigValue("filenames", String.format("%s,%s", testGtVcf, testNoGtVcf)));
-            values.add(new ConfigValue("beaconJson", beaconJson));
+            values.add(new ConfigValue("beaconJsonFile", beaconJson));
 
             return new AdapterConfig("vcf_test_beacon", AdapterConfig.class.getCanonicalName(), values);
         } catch (URISyntaxException e) {
@@ -197,7 +197,7 @@ public class VcfBeaconAdapterTest {
 
 
             values.add(new ConfigValue("filenames", String.format(files)));
-            values.add(new ConfigValue("beaconJson", beaconJson));
+            values.add(new ConfigValue("beaconJsonFile", beaconJson));
 
             return new AdapterConfig("vcf_test_beacon", AdapterConfig.class.getCanonicalName(), values);
         } catch (URISyntaxException e) {

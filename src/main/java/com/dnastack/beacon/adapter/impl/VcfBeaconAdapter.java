@@ -54,10 +54,16 @@ import java.util.List;
  * - These files must be bgzipped and indexed with tabix in order to be opened by the adapter
  * - They must be valid VCF 4.0 files
  * <p>
- * 2. Name: "beaconJson", Value: "path to a json representation of a beacon" {@link Beacon}
+ * One Of the following:
+ * 2. Name: "beaconJsonFile", Value: "path to a json representation of a beacon" {@link Beacon}
  * - The json file should contain a full representation of a beacon
  * - The number of datasets MUST equal the number of vcf file
  * - The datasets and vcf files are linked in order, ie the first file listed is interpreted as the first Dataset listed
+ * <p>
+ * 3. Name: "beaconJson", Value: "Beacon json representation"
+ * - The number of datasets MUST equal the number of vcf file
+ * - The datasets and vcf files are linked in order, ie the first file listed is interpreted as the first Dataset listed
+ * <p>
  * <p>
  * <p>
  * To create a new instance of the VcfBeaconAdapter simply call the no Arguments constructor. Before the beacon can be used
@@ -78,7 +84,8 @@ public class VcfBeaconAdapter implements BeaconAdapter {
      * adapterConfig object
      * <p>
      * 1. filenames: Comma Seperated list of filenames pointing to vcf files. VCF files must be in bgzipped format and indexed accordingly
-     * 2. beaconJson: json file describing the meta data for this beacon. The file must be a JSON representation of the org.ga4g.beacon.Beacon class
+     * 2. beaconJsonFile: json file describing the meta data for this beacon. The file must be a JSON representation of the org.ga4g.beacon.Beacon class
+     * 3. beaconJson: json string describing the meta data for this beacon
      *
      * @param adapterConfig config object that tells the adapter how to be configured
      */
@@ -88,7 +95,7 @@ public class VcfBeaconAdapter implements BeaconAdapter {
         readRequiredParamsFromConfig(configValues);
     }
 
-    private Beacon readBeaconJson(String filename) {
+    private Beacon readBeaconJsonFile(String filename) {
         File beaconJsonFile = new File(filename);
         if (!beaconJsonFile.exists()) {
             throw new RuntimeException("BeaconJson file does not exist");
@@ -96,12 +103,16 @@ public class VcfBeaconAdapter implements BeaconAdapter {
         try {
 
             String beaconJson = new String(Files.readAllBytes(beaconJsonFile.toPath()));
-            Gson gson = new GsonBuilder().create();
-            return gson.fromJson(beaconJson, Beacon.class);
+            return readBeaconJson(beaconJson);
 
         } catch (IOException e) {
             throw new RuntimeException(e.getMessage());
         }
+    }
+
+    private Beacon readBeaconJson(String json) {
+        Gson gson = new GsonBuilder().create();
+        return gson.fromJson(json, Beacon.class);
     }
 
     /**
@@ -125,9 +136,11 @@ public class VcfBeaconAdapter implements BeaconAdapter {
                     }
                     filenames = names.split(",");
                     break;
+                case "beaconJsonFile":
+                    beacon = readBeaconJsonFile(configValue.getValue());
+                    break;
                 case "beaconJson":
                     beacon = readBeaconJson(configValue.getValue());
-                    break;
             }
         }
 
