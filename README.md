@@ -1,8 +1,7 @@
 # Vcf Beacon Adapter
 
 
-The vcf beacon adapter allows you to "beaconize" any number of vcf files under a single beacon. You can then subsequently query the vcf files as you would any normal beacon.
-The adapter is meant to be used in conjunction with the Beacon-java rest implementation, or the Beaconizer rest implementation
+The vcf beacon adapter allows you to "beaconize" any number of vcf files under a single beacon. You can then subsequently query the vcf files as you would any normal beacon. The adapter is meant to be used in conjunction with the Beacon-java rest implementation, or the Beaconizer rest implementation
 
 
 ## Requirements
@@ -16,12 +15,11 @@ The adapter is meant to be used in conjunction with the Beacon-java rest impleme
  
 ## Vcf Files
 
-This adapter uses vcf files to query variant data. The vcf specification can be found [here](https://samtools.github.io/hts-specs/VCFv4.2.pdf). In order to allow for fast, random access of vcf files (which can be gigabytes in size), the input files must be [bgzipped](http://www.htslib.org/doc/tabix.html) and [tab indexed](http://www.htslib.org/doc/tabix.html).
-Additionally, the  index file will be expected to have the same name as the vcf file, exception with an additional ".tbi" extension on the end. It is also expected that this file is in the same file folder as the vcf file
+This adapter uses vcf files to query variant data. The vcf specification can be found [here](https://samtools.github.io/hts-specs/VCFv4.2.pdf). In order to allow for fast, random access of vcf files (which can be gigabytes in size), the input files must be [bgzipped](http://www.htslib.org/doc/tabix.html) and [tab indexed](http://www.htslib.org/doc/tabix.html). Additionally, the  index file will be expected to have the same name as the vcf file, except with an additional ".tbi" extension on the end. It is also expected that this file is in the same file folder as the vcf file.
 
 ## Configuring the Adapter
 
-In order to properly configure the adapter you must call the initAdapter method, supplying it with an AdapterConfig object once a new adapter object has been created.
+In order to properly configure the adapter you must call the initAdapter method from the VcfBeaconAdapter class, supplying it with an AdapterConfig object once a new adapter object has been created.
 There are two required parameters for the configuration that must be supplied as ConfigValues to the AdapterConfig object:
 
 #### Required
@@ -32,10 +30,10 @@ There are two required parameters for the configuration that must be supplied as
 #### One of the following
 | Name | Value | example |
 |--- | ---| --- |
-| "beconJsonFile" | Path to a json file that describes this beaon. The json file is a serialized representation of a beacon and must meet all the requirements of a normal beacon object. | "/path/to/beacon.json" |
+| "beconJsonFile" | Path to a json file that describes this beacon. The json file is a serialized representation of a beacon and must meet all the requirements of a normal beacon object. | "/path/to/beacon.json" |
 | "beaconJson" | Json string that describes this beacon | See below |
 
-Since each vcf file is interpreted as its own dataset, the number of datasets defined in the beaconJson must equal the number of files in the comma seperated list. Each file will be associated to a dataset based on its index in the list. Ie the first dataset will be associated with the first vcf file
+Since each vcf file is interpreted as its own dataset, the number of datasets defined in the beaconJson/beaconJsonFile must equal the number of files in the comma seperated list. Each file will be associated to a dataset based on its index in the list. i.e the first dataset will be associated with the first vcf file
 
 
 ```java
