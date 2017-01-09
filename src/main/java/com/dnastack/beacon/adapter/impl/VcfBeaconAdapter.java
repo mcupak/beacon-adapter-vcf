@@ -23,7 +23,6 @@
  */
 package com.dnastack.beacon.adapter.impl;
 
-
 import com.dnastack.beacon.adapter.api.BeaconAdapter;
 import com.dnastack.beacon.adapter.vcf.VcfBeacon;
 import com.dnastack.beacon.exceptions.BeaconException;
@@ -74,26 +73,11 @@ import java.util.List;
  * Beacon Version: 0.3
  *
  * @author patmagee patrickmageee@gmail.com
+ * @author Miro Cupak (mirocupak@gmail.com)
  */
 public class VcfBeaconAdapter implements BeaconAdapter {
 
     private VcfBeacon vcfBeacon;
-
-    /**
-     * Initialize the adapter for a VcfBeacon. The adapter expects several config parameters tro be present in the
-     * adapterConfig object
-     * <p>
-     * 1. filenames: Comma Seperated list of filenames pointing to vcf files. VCF files must be in bgzipped format and indexed accordingly
-     * 2. beaconJsonFile: json file describing the meta data for this beacon. The file must be a JSON representation of the org.ga4g.beacon.Beacon class
-     * 3. beaconJson: json string describing the meta data for this beacon
-     *
-     * @param adapterConfig config object that tells the adapter how to be configured
-     */
-    @Override
-    public void initAdapter(AdapterConfig adapterConfig) {
-        List<ConfigValue> configValues = adapterConfig.getConfigValues();
-        readRequiredParamsFromConfig(configValues);
-    }
 
     private Beacon readBeaconJsonFile(String filename) {
         File beaconJsonFile = new File(filename);
@@ -145,13 +129,38 @@ public class VcfBeaconAdapter implements BeaconAdapter {
         }
 
         if (filenames == null) {
-            throw new RuntimeException("Missing required parameter: filenames. Please supply a comma separated list of files to load");
+            throw new RuntimeException(
+                    "Missing required parameter: filenames. Please supply a comma separated list of files to load");
         }
         if (beacon == null) {
-            throw new RuntimeException("Missing required parameter: beaconJson. Please add the appropriate configuration paramter then retry");
+            throw new RuntimeException(
+                    "Missing required parameter: beaconJson. Please add the appropriate configuration paramter then retry");
         }
 
         vcfBeacon = new VcfBeacon(beacon, filenames);
+    }
+
+    private void checkAdapterInit() {
+        if (vcfBeacon == null) {
+            throw new IllegalStateException(
+                    "VcfBeaconAdapter adapter has not been initialized and does not point to any vcf file");
+        }
+    }
+
+    /**
+     * Initialize the adapter for a VcfBeacon. The adapter expects several config parameters tro be present in the
+     * adapterConfig object
+     * <p>
+     * 1. filenames: Comma Seperated list of filenames pointing to vcf files. VCF files must be in bgzipped format and indexed accordingly
+     * 2. beaconJsonFile: json file describing the meta data for this beacon. The file must be a JSON representation of the org.ga4g.beacon.Beacon class
+     * 3. beaconJson: json string describing the meta data for this beacon
+     *
+     * @param adapterConfig config object that tells the adapter how to be configured
+     */
+    @Override
+    public void initAdapter(AdapterConfig adapterConfig) {
+        List<ConfigValue> configValues = adapterConfig.getConfigValues();
+        readRequiredParamsFromConfig(configValues);
     }
 
     @Override
@@ -163,18 +172,18 @@ public class VcfBeaconAdapter implements BeaconAdapter {
     @Override
     public BeaconAlleleResponse getBeaconAlleleResponse(String referenceName, Long start, String referenceBases, String alternateBases, String assemblyId, List<String> datasetIds, Boolean includeDatasetResponses) throws BeaconException {
         checkAdapterInit();
-        return vcfBeacon.search(referenceName, start, referenceBases, alternateBases, assemblyId, datasetIds, includeDatasetResponses);
+        return vcfBeacon.search(referenceName,
+                                start,
+                                referenceBases,
+                                alternateBases,
+                                assemblyId,
+                                datasetIds,
+                                includeDatasetResponses);
     }
 
     @Override
     public Beacon getBeacon() throws BeaconException {
         checkAdapterInit();
         return vcfBeacon.getBeacon();
-    }
-
-    private void checkAdapterInit() {
-        if (vcfBeacon == null) {
-            throw new IllegalStateException("VcfBeaconAdapter adapter has not been initialized and does not point to any vcf file");
-        }
     }
 }

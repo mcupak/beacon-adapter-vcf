@@ -1,0 +1,15 @@
+language: java
+sudo: false
+jdk:
+  - oraclejdk8
+branches:
+  only:
+    - master
+    - develop
+before_install:
+  - wget https://github.com/ga4gh/beacon-team/archive/v0.3.0.tar.gz
+  - tar xvf *.tar.gz
+  - rm *.tar.gz
+  - mvn install -q -f beacon-team-*/pom.xml
+  - git clone https://github.com/mcupak/beacon-adapter-api.git beacon-adapter-api
+  - mvn install -q -f beacon-adapter-api/pom.xml

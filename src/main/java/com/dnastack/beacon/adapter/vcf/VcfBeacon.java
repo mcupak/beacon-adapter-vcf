@@ -43,13 +43,13 @@ import java.util.stream.Collectors;
  * All vcf files must be bgzipped and tabixed.
  *
  * @author patmagee patrickmageee@gmail.com
+ * @author Miro Cupak (mirocupak@gmail.com)
  */
 public class VcfBeacon {
 
     @Getter
     private final Beacon beacon;
     private final Map<String, VcfDataset> datasets;
-
 
     /**
      * VcfBeacon
@@ -72,7 +72,8 @@ public class VcfBeacon {
         }
 
         if (filenames.length != beacon.getDatasets().size()) {
-            throw new RuntimeException("Length of DatasetIds and Filenames does not match. Each file constitutes a single dataset");
+            throw new RuntimeException(
+                    "Length of DatasetIds and Filenames does not match. Each file constitutes a single dataset");
         }
 
         for (int i = 0; i < filenames.length; i++) {
@@ -83,83 +84,6 @@ public class VcfBeacon {
 
         this.datasets = Collections.unmodifiableMap(datasetMap);
     }
-
-    /**
-     * Search
-     * <p>
-     * Search a ${@link VcfDataset} for a vairnt based on the search criteria the user has defined. Search each dataset defined in the DatasetIds and
-     * aggregate the results into a single ${@link BeaconAlleleResponse} object indicating whether the variant was found in any of the
-     * datasets or if an error was encountered.
-     *
-     * @param referenceName           name of contig
-     * @param start                   start position
-     * @param referenceBases          reference bases to search
-     * @param alternateBases          alternate bases to search
-     * @param assemblyId              genome assembly Id
-     * @param datasetIds              list of datasets to search
-     * @param includeDatasetResponses shoudl the dataset responses be included in the final response object
-     * @return Beacon Allele Response with existence of variant
-     */
-    public BeaconAlleleResponse search(String referenceName, Long start, String referenceBases, String alternateBases, String assemblyId, List<String> datasetIds, Boolean includeDatasetResponses) {
-
-        BeaconError error = null;
-        if (referenceName == null) {
-            error = new BeaconError(400, "Reference name cannot be null");
-        } else if (start == null || start < 0) {
-            error = new BeaconError(400, "Start cannot be null or less then 0");
-        } else if (referenceBases == null) {
-            error = new BeaconError(400, "Reference bases cannot be null");
-        } else if (alternateBases == null) {
-            error = new BeaconError(400, "Alternate bases cannot be null");
-        } else if (assemblyId == null) {
-            error = new BeaconError(400, "Assembly Id cannot be null");
-        } else if (datasetIds == null || datasetIds.size() == 0) {
-            error = new BeaconError(400, "DatasetIds cannot be null and must include at lesat 1 id");
-        }
-
-        if (error != null) {
-            BeaconAlleleResponse response = createResponse(null);
-            response.setError(error);
-            return response;
-        }
-
-        if (includeDatasetResponses == null) {
-            includeDatasetResponses = false;
-        }
-
-        return search(new BeaconAlleleRequest(referenceName, start, referenceBases, alternateBases, assemblyId, datasetIds, includeDatasetResponses));
-    }
-
-
-    /**
-     * Search
-     * <p>
-     * Search a ${@link VcfDataset} for a vairnt based on the search criteria the user has defined. Search each dataset defined in the DatasetIds and
-     * aggregate the results into a single ${@link BeaconAlleleResponse} object indicating whether the variant was found in any of the
-     * datasets or if an error was encountered.
-     *
-     * @param request request object
-     * @return
-     */
-    public BeaconAlleleResponse search(BeaconAlleleRequest request) {
-        if (request.getIncludeDatasetResponses() == null) {
-            request.setIncludeDatasetResponses(false);
-        }
-        BeaconAlleleResponse response = createResponse(request);
-
-        if (request.getDatasetIds().size() == 0) {
-            response.setError(new BeaconError(500, "No datasets defined. At least one dataset must be defined"));
-            return response;
-        }
-        List<BeaconDatasetAlleleResponse> datasetRespones = request
-                .getDatasetIds()
-                .stream()
-                .map(datasetId -> searchDataset(datasetId, request))
-                .collect(Collectors.toList());
-
-        return finalizeResponse(request, response, datasetRespones);
-    }
-
 
     /**
      * SearchDataset
@@ -234,6 +158,86 @@ public class VcfBeacon {
         response.setBeaconId(beacon.getId());
 
         return response;
+    }
+
+    /**
+     * Search
+     * <p>
+     * Search a ${@link VcfDataset} for a vairnt based on the search criteria the user has defined. Search each dataset defined in the DatasetIds and
+     * aggregate the results into a single ${@link BeaconAlleleResponse} object indicating whether the variant was found in any of the
+     * datasets or if an error was encountered.
+     *
+     * @param referenceName           name of contig
+     * @param start                   start position
+     * @param referenceBases          reference bases to search
+     * @param alternateBases          alternate bases to search
+     * @param assemblyId              genome assembly Id
+     * @param datasetIds              list of datasets to search
+     * @param includeDatasetResponses shoudl the dataset responses be included in the final response object
+     * @return Beacon Allele Response with existence of variant
+     */
+    public BeaconAlleleResponse search(String referenceName, Long start, String referenceBases, String alternateBases, String assemblyId, List<String> datasetIds, Boolean includeDatasetResponses) {
+
+        BeaconError error = null;
+        if (referenceName == null) {
+            error = new BeaconError(400, "Reference name cannot be null");
+        } else if (start == null || start < 0) {
+            error = new BeaconError(400, "Start cannot be null or less then 0");
+        } else if (referenceBases == null) {
+            error = new BeaconError(400, "Reference bases cannot be null");
+        } else if (alternateBases == null) {
+            error = new BeaconError(400, "Alternate bases cannot be null");
+        } else if (assemblyId == null) {
+            error = new BeaconError(400, "Assembly Id cannot be null");
+        } else if (datasetIds == null || datasetIds.size() == 0) {
+            error = new BeaconError(400, "DatasetIds cannot be null and must include at lesat 1 id");
+        }
+
+        if (error != null) {
+            BeaconAlleleResponse response = createResponse(null);
+            response.setError(error);
+            return response;
+        }
+
+        if (includeDatasetResponses == null) {
+            includeDatasetResponses = false;
+        }
+
+        return search(new BeaconAlleleRequest(referenceName,
+                                              start,
+                                              referenceBases,
+                                              alternateBases,
+                                              assemblyId,
+                                              datasetIds,
+                                              includeDatasetResponses));
+    }
+
+    /**
+     * Search
+     * <p>
+     * Search a ${@link VcfDataset} for a vairnt based on the search criteria the user has defined. Search each dataset defined in the DatasetIds and
+     * aggregate the results into a single ${@link BeaconAlleleResponse} object indicating whether the variant was found in any of the
+     * datasets or if an error was encountered.
+     *
+     * @param request request object
+     * @return
+     */
+    public BeaconAlleleResponse search(BeaconAlleleRequest request) {
+        if (request.getIncludeDatasetResponses() == null) {
+            request.setIncludeDatasetResponses(false);
+        }
+        BeaconAlleleResponse response = createResponse(request);
+
+        if (request.getDatasetIds().size() == 0) {
+            response.setError(new BeaconError(500, "No datasets defined. At least one dataset must be defined"));
+            return response;
+        }
+        List<BeaconDatasetAlleleResponse> datasetRespones = request.getDatasetIds()
+                                                                   .stream()
+                                                                   .map(datasetId -> searchDataset(datasetId, request))
+                                                                   .collect(Collectors.toList());
+
+        return finalizeResponse(request, response, datasetRespones);
     }
 
 }

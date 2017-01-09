@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.dnastack</groupId>
-    <artifactId>beacon-java-from-vcf</artifactId>
+    <artifactId>beacon-adapter-vcf</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>beacon-java-from-vcf</name>
+    <name>beacon-adapter-vcf</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -29,6 +29,12 @@
             <name>Patrick Magee</name>
             <email>patrickmageee@gmail.com</email>
             <url>https://github.com/patmagee</url>
+        </developer>
+        <developer>
+            <id>mcupak</id>
+            <name>Miro Cupak</name>
+            <email>mirocupak@gmail.com</email>
+            <url>https://github.com/mcupak</url>
         </developer>
     </developers>
 

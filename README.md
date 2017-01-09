@@ -1,21 +1,19 @@
-# Vcf Beacon Adapter
+# Beacon adapter for VCF [![Build Status](https://travis-ci.org/mcupak/beacon-adapter-vcf.svg?branch=develop)](https://travis-ci.org/mcupak/beacon-adapter-vcf) [![GitHub license](https://img.shields.io/badge/license-Apache%202-blue.svg)](https://raw.githubusercontent.com/mcupak/beacon-adapter-vcf/develop/LICENSE)
 
-
-The vcf beacon adapter allows you to "beaconize" any number of vcf files under a single beacon. You can then subsequently query the vcf files as you would any normal beacon. The adapter is meant to be used in conjunction with the Beacon-java rest implementation, or the Beaconizer rest implementation
+The VCF beacon adapter allows you to "beaconize" any number of vcf files under a single beacon. You can then subsequently query the vcf files as you would any normal beacon. The adapter is meant to be used in conjunction with the Beacon-java rest implementation, or the Beaconizer rest implementation
 
 
 ## Requirements
 
  - Java 8
  - [Beacon spec v0.3](https://github.com/ga4gh/beacon-team)
- - [Beacon-java](https://github.com/mcupak/beacon-java) / [Beaconizer](https://github.com/mcupak/beaconizer) REST implementation
- - vcf spec 4.0 or later
+ - VCF spec 4.0 or later
  - bgzip / tabix
 
  
-## Vcf Files
+## VCF Files
 
-This adapter uses vcf files to query variant data. The vcf specification can be found [here](https://samtools.github.io/hts-specs/VCFv4.2.pdf). In order to allow for fast, random access of vcf files (which can be gigabytes in size), the input files must be [bgzipped](http://www.htslib.org/doc/tabix.html) and [tab indexed](http://www.htslib.org/doc/tabix.html). Additionally, the  index file will be expected to have the same name as the vcf file, except with an additional ".tbi" extension on the end. It is also expected that this file is in the same file folder as the vcf file.
+This adapter uses VCF files to query variant data. The VCF specification can be found [here](https://samtools.github.io/hts-specs/VCFv4.3.pdf). In order to allow for fast, random access of VCF files (which can be gigabytes in size), the input files must be [bgzipped](http://www.htslib.org/doc/tabix.html) and [tab indexed](http://www.htslib.org/doc/tabix.html). Additionally, the index file will be expected to have the same name as the VCF file, except with an additional ".tbi" extension on the end. It is also expected that this file is in the same file folder as the VCF file.
 
 ## Configuring the Adapter
 
@@ -33,8 +31,7 @@ There are two required parameters for the configuration that must be supplied as
 | "beconJsonFile" | Path to a json file that describes this beacon. The json file is a serialized representation of a beacon and must meet all the requirements of a normal beacon object. | "/path/to/beacon.json" |
 | "beaconJson" | Json string that describes this beacon | See below |
 
-Since each vcf file is interpreted as its own dataset, the number of datasets defined in the beaconJson/beaconJsonFile must equal the number of files in the comma seperated list. Each file will be associated to a dataset based on its index in the list. i.e the first dataset will be associated with the first vcf file
-
+Since each VCF file is interpreted as its own dataset, the number of datasets defined in the beaconJson/beaconJsonFile must equal the number of files in the comma seperated list. Each file will be associated to a dataset based on its index in the list. i.e the first dataset will be associated with the first VCF file
 
 ```java
 
@@ -55,7 +52,6 @@ adapter.initAdapter(config);
 
 
 ```
-
 
 #### Example beacon.json
 

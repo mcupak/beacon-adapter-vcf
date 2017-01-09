@@ -50,13 +50,31 @@ import java.util.Map;
  * but additionally, at least one sample must have alternate allele that is being searched for
  *
  * @author patmagee patrickmageee@gmail.com
+ * @author Miro Cupak (mirocupak@gmail.com)
  */
 class VcfDataset {
-
 
     private final VCFFileReader reader;
     private final VCFHeader header;
     private final BeaconDataset dataset;
+
+    /**
+     * Simple matcher for determining if a genotype has a specific allele
+     *
+     * @param allele Allele to test
+     * @param gt     genotype to test against
+     * @return boolean
+     */
+    private static boolean matchGenotypeString(String allele, String gt) {
+        String[] gts = gt.split("[|/]");
+
+        for (String altGt : gts) {
+            if (altGt.equals(allele)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * VcfDataset
@@ -84,9 +102,7 @@ class VcfDataset {
         this.header = new VCFHeader(reader.getFileHeader());
         this.dataset = dataset;
 
-
     }
-
 
     /**
      * Search
@@ -118,16 +134,14 @@ class VcfDataset {
         //Set the intial exists status
         response.setExists(false);
 
-
         //determine the offest for the end
-        int offset = request.getAlternateBases().length() > request.getReferenceBases().length() ? request
-                .getAlternateBases()
-                .length() : request.getAlternateBases().length();
+        int offset = request.getAlternateBases().length() > request.getReferenceBases().length()
+                     ? request.getAlternateBases().length()
+                     : request.getAlternateBases().length();
 
-        CloseableIterator<VariantContext> context = reader.query(request.getReferenceName(), request
-                .getStart()
-                .intValue(), request.getStart().intValue() + offset);
-
+        CloseableIterator<VariantContext> context = reader.query(request.getReferenceName(),
+                                                                 request.getStart().intValue(),
+                                                                 request.getStart().intValue() + offset);
 
         long variantCount = 0;
         long callCount = 0;
@@ -139,10 +153,9 @@ class VcfDataset {
             VariantContext variantContext = context.next();
             count++;
             //For each rresult from the query, determine if the ref / alt allele match the search criteria
-            if (variantContext.getReference().basesMatch(ref) && variantContext
-                    .getAlternateAlleles()
-                    .stream()
-                    .anyMatch(a -> a.basesMatch(alt))) {
+            if (variantContext.getReference().basesMatch(ref) && variantContext.getAlternateAlleles()
+                                                                               .stream()
+                                                                               .anyMatch(a -> a.basesMatch(alt))) {
 
                 //If there is no genotyping data it is enough that the allele shows in the Alt Column
                 if (!header.hasGenotypingData()) {
@@ -151,12 +164,11 @@ class VcfDataset {
                     callCount++;
                     //Do any of the samples contain the variant
                 } else {
-                    Long numMatches = variantContext
-                            .getGenotypes()
-                            .stream()
-                            .map(g -> g.getGenotypeString())
-                            .filter(s -> matchGenotypeString(request.getAlternateBases(), s))
-                            .count();
+                    Long numMatches = variantContext.getGenotypes()
+                                                    .stream()
+                                                    .map(g -> g.getGenotypeString())
+                                                    .filter(s -> matchGenotypeString(request.getAlternateBases(), s))
+                                                    .count();
 
                     if (numMatches > 0) {
                         response.setExists(true);
@@ -184,24 +196,6 @@ class VcfDataset {
         }
 
         return response;
-    }
-
-    /**
-     * Simple matcher for determining if a genotype has a specific allele
-     *
-     * @param allele Allele to test
-     * @param gt     genotype to test against
-     * @return boolean
-     */
-    private static boolean matchGenotypeString(String allele, String gt) {
-        String[] gts = gt.split("[|/]");
-
-        for (String altGt : gts) {
-            if (altGt.equals(allele)) {
-                return true;
-            }
-        }
-        return false;
     }
 
 }
