@@ -103,7 +103,7 @@ public class VcfBeacon {
             response = new BeaconDatasetAlleleResponse();
             BeaconError error = new BeaconError();
             error.setErrorCode(404);
-            error.setMessage("Could not find dataset with id: " + datasetId);
+            error.setErrorMessage("Could not find dataset with id: " + datasetId);
             response.setError(error);
         } else {
             response = dataset.search(request);
@@ -136,12 +136,14 @@ public class VcfBeacon {
             response.setError(datasets.get(0).getError());
             response.setExists(null);
         } else {
-            response.setExists(datasets.stream().anyMatch(r -> r.getExists()));
+            response.setExists(datasets.stream().anyMatch(BeaconDatasetAlleleResponse::isExists));
         }
 
-        if (request.getIncludeDatasetResponses()) {
+        if (request.getIncludeDatasetResponses() == BeaconAlleleRequest.IncludeDatasetResponsesEnum.ALL) {
             response.setDatasetAlleleResponses(datasets);
         }
+
+        // TODO: add behavior for HIT and MISS
 
         return response;
     }
@@ -176,40 +178,49 @@ public class VcfBeacon {
      * @param includeDatasetResponses shoudl the dataset responses be included in the final response object
      * @return Beacon Allele Response with existence of variant
      */
-    public BeaconAlleleResponse search(String referenceName, Long start, String referenceBases, String alternateBases, String assemblyId, List<String> datasetIds, Boolean includeDatasetResponses) {
+    public BeaconAlleleResponse search(String referenceName, Long start, String referenceBases, String alternateBases, String assemblyId, List<String> datasetIds, BeaconAlleleRequest.IncludeDatasetResponsesEnum includeDatasetResponses) {
 
         BeaconError error = null;
         if (referenceName == null) {
-            error = new BeaconError(400, "Reference name cannot be null");
+            error = new BeaconError();
+            error.setErrorMessage("Reference name cannot be null");
         } else if (start == null || start < 0) {
-            error = new BeaconError(400, "Start cannot be null or less then 0");
+            error = new BeaconError();
+            error.setErrorMessage("Start cannot be null or less then 0");
         } else if (referenceBases == null) {
-            error = new BeaconError(400, "Reference bases cannot be null");
+            error = new BeaconError();
+            error.setErrorMessage("Reference bases cannot be null");
         } else if (alternateBases == null) {
-            error = new BeaconError(400, "Alternate bases cannot be null");
+            error = new BeaconError();
+            error.setErrorMessage("Alternate bases cannot be null");
         } else if (assemblyId == null) {
-            error = new BeaconError(400, "Assembly Id cannot be null");
+            error = new BeaconError();
+            error.setErrorMessage("Assembly Id cannot be null");
         } else if (datasetIds == null || datasetIds.size() == 0) {
-            error = new BeaconError(400, "DatasetIds cannot be null and must include at lesat 1 id");
+            error = new BeaconError();
+            error.setErrorMessage("DatasetIds cannot be null and must include at lesat 1 id");
         }
 
         if (error != null) {
+            error.setErrorCode(400);
             BeaconAlleleResponse response = createResponse(null);
             response.setError(error);
             return response;
         }
 
         if (includeDatasetResponses == null) {
-            includeDatasetResponses = false;
+            includeDatasetResponses = BeaconAlleleRequest.IncludeDatasetResponsesEnum.NONE;
         }
 
-        return search(new BeaconAlleleRequest(referenceName,
-                                              start,
-                                              referenceBases,
-                                              alternateBases,
-                                              assemblyId,
-                                              datasetIds,
-                                              includeDatasetResponses));
+        BeaconAlleleRequest request = new BeaconAlleleRequest();
+        request.setReferenceName(Chromosome.fromValue(referenceName));
+        request.setStart(start);
+        request.setReferenceBases(referenceBases);
+        request.setAlternateBases(alternateBases);
+        request.setAssemblyId(assemblyId);
+        request.setDatasetIds(datasetIds);
+        request.setIncludeDatasetResponses(includeDatasetResponses);
+        return search(request);
     }
 
     /**
@@ -224,12 +235,15 @@ public class VcfBeacon {
      */
     public BeaconAlleleResponse search(BeaconAlleleRequest request) {
         if (request.getIncludeDatasetResponses() == null) {
-            request.setIncludeDatasetResponses(false);
+            request.setIncludeDatasetResponses(BeaconAlleleRequest.IncludeDatasetResponsesEnum.NONE);
         }
         BeaconAlleleResponse response = createResponse(request);
 
         if (request.getDatasetIds().size() == 0) {
-            response.setError(new BeaconError(500, "No datasets defined. At least one dataset must be defined"));
+            BeaconError error = new BeaconError();
+            error.setErrorCode(500);
+            error.setErrorMessage("No datasets defined. At least one dataset must be defined");
+            response.setError(error);
             return response;
         }
         List<BeaconDatasetAlleleResponse> datasetRespones = request.getDatasetIds()

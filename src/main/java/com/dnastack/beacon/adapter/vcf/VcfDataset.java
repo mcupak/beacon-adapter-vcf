@@ -29,13 +29,13 @@ import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
 import htsjdk.variant.vcf.VCFHeader;
 import lombok.NonNull;
-import org.ga4gh.beacon.BeaconAlleleRequest;
-import org.ga4gh.beacon.BeaconDataset;
-import org.ga4gh.beacon.BeaconDatasetAlleleResponse;
-import org.ga4gh.beacon.BeaconError;
+import org.ga4gh.beacon.*;
 
 import java.io.File;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -127,7 +127,10 @@ class VcfDataset {
 
         //Ensure the request assembly matches the assembly for this dataset
         if (!request.getAssemblyId().equals(dataset.getAssemblyId())) {
-            response.setError(new BeaconError(400, "Invalid Assembly"));
+            BeaconError error = new BeaconError();
+            error.setErrorCode(400);
+            error.setErrorMessage("Invalid Assembly");
+            response.setError(error);
             return response;
         }
 
@@ -139,7 +142,7 @@ class VcfDataset {
                      ? request.getAlternateBases().length()
                      : request.getAlternateBases().length();
 
-        CloseableIterator<VariantContext> context = reader.query(request.getReferenceName(),
+        CloseableIterator<VariantContext> context = reader.query(request.getReferenceName().toString(),
                                                                  request.getStart().intValue(),
                                                                  request.getStart().intValue() + offset);
 
@@ -179,19 +182,22 @@ class VcfDataset {
                 }
             }
         }
-        if (response.getExists()) {
+        if (response.isExists()) {
             response.setVariantCount(variantCount);
             response.setCallCount(callCount);
             if (header.hasGenotypingData()) {
                 response.setSampleCount(sampleCount);
-                response.setFrequency(sampleCount / new Double(header.getNGenotypeSamples()));
+                response.setFrequency(BigDecimal.valueOf(sampleCount).divide(BigDecimal.valueOf(header.getNGenotypeSamples())));
             }
 
         }
 
         if (count > 1) {
-            Map<String, String> info = new HashMap();
-            info.put("warn", "Multiple variants were found with the same query");
+            KeyValuePair keyValuePair = new KeyValuePair();
+            keyValuePair.setKey("warn");
+            keyValuePair.setValue("Multiple variants were found with the same query");
+            List<KeyValuePair> info = new ArrayList<>();
+            info.add(keyValuePair);
             response.setInfo(info);
         }
 

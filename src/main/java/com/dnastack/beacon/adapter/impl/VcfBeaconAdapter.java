@@ -170,7 +170,7 @@ public class VcfBeaconAdapter implements BeaconAdapter {
     }
 
     @Override
-    public BeaconAlleleResponse getBeaconAlleleResponse(String referenceName, Long start, String referenceBases, String alternateBases, String assemblyId, List<String> datasetIds, Boolean includeDatasetResponses) throws BeaconException {
+    public BeaconAlleleResponse getBeaconAlleleResponse(String referenceName, Long start, String referenceBases, String alternateBases, String assemblyId, List<String> datasetIds, BeaconAlleleRequest.IncludeDatasetResponsesEnum includeDatasetResponses) throws BeaconException {
         checkAdapterInit();
         return vcfBeacon.search(referenceName,
                                 start,

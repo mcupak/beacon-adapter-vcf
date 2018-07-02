@@ -4,15 +4,16 @@ import com.dnastack.beacon.adapter.api.BeaconAdapter;
 import com.dnastack.beacon.exceptions.BeaconException;
 import com.dnastack.beacon.utils.AdapterConfig;
 import com.dnastack.beacon.utils.ConfigValue;
-import org.apache.commons.lang.StringUtils;
 import org.ga4gh.beacon.Beacon;
 import org.ga4gh.beacon.BeaconAlleleRequest;
 import org.ga4gh.beacon.BeaconAlleleResponse;
+import org.ga4gh.beacon.BeaconDatasetAlleleResponse;
 import org.junit.Test;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,10 +42,11 @@ public class VcfBeaconAdapterTest {
             String beaconJson = cl.getResource(BEACON_FILE).toURI().getPath();
             List<ConfigValue> values = new ArrayList<>();
 
-            values.add(new ConfigValue("filenames", String.format("%s,%s", testGtVcf, testNoGtVcf)));
-            values.add(new ConfigValue("beaconJsonFile", beaconJson));
+            values.add(ConfigValue.builder().name("filenames").value(String.format("%s,%s", testGtVcf, testNoGtVcf)).build());
+            values.add(ConfigValue.builder().name("beaconJsonFile").value(beaconJson).build());
 
-            return new AdapterConfig("vcf_test_beacon", AdapterConfig.class.getCanonicalName(), values);
+            return AdapterConfig.builder().name("vcf_test_beacon")
+                    .adapterClass(AdapterConfig.class.getCanonicalName()).configValues(values).build();
         } catch (URISyntaxException e) {
             throw new NullPointerException(e.getMessage());
         }
@@ -57,12 +59,13 @@ public class VcfBeaconAdapterTest {
             String beaconJson = cl.getResource(BEACON_FILE).toURI().getPath();
             List<ConfigValue> values = new ArrayList<>();
 
-            String files = StringUtils.join(filenames, ",");
+            String files = String.join(",", filenames);
 
-            values.add(new ConfigValue("filenames", String.format(files)));
-            values.add(new ConfigValue("beaconJsonFile", beaconJson));
+            values.add(ConfigValue.builder().name("filenames").value(files).build());
+            values.add(ConfigValue.builder().name("beaconJsonFile").value(beaconJson).build());
 
-            return new AdapterConfig("vcf_test_beacon", AdapterConfig.class.getCanonicalName(), values);
+            return AdapterConfig.builder().name("vcf_test_beacon")
+                    .adapterClass(AdapterConfig.class.getCanonicalName()).configValues(values).build();
         } catch (URISyntaxException e) {
             throw new NullPointerException(e.getMessage());
         }
@@ -93,23 +96,24 @@ public class VcfBeaconAdapterTest {
     @Test
     public void testInitAdapterMissingParams() {
 
-        AdapterConfig missingBeaconJson = new AdapterConfig(adapterConfig.getName(),
-                                                            adapterConfig.getAdapterClass(),
-                                                            adapterConfig.getConfigValues()
-                                                                         .stream()
-                                                                         .filter(x -> !x.getName()
-                                                                                        .equals("beaconJsonFile"))
-                                                                         .collect(Collectors.toList()));
-        AdapterConfig missingFilename = new AdapterConfig(adapterConfig.getName(),
-                                                          adapterConfig.getAdapterClass(),
-                                                          adapterConfig.getConfigValues()
-                                                                       .stream()
-                                                                       .filter(x -> !x.getName().equals("filenames"))
-                                                                       .collect(Collectors.toList()));
+        AdapterConfig missingBeaconJson = AdapterConfig.builder().name(adapterConfig.getName())
+                .adapterClass(adapterConfig.getAdapterClass())
+                .configValues(adapterConfig.getConfigValues()
+                        .stream()
+                        .filter(x -> !x.getName().equals("beaconJsonFile"))
+                        .collect(Collectors.toList()))
+                .build();
 
-        AdapterConfig missingBoth = new AdapterConfig(adapterConfig.getName(),
-                                                      adapterConfig.getAdapterClass(),
-                                                      new ArrayList<ConfigValue>());
+        AdapterConfig missingFilename = AdapterConfig.builder().name(adapterConfig.getName())
+                .adapterClass(adapterConfig.getAdapterClass())
+                .configValues(adapterConfig.getConfigValues()
+                        .stream()
+                        .filter(x -> !x.getName().equals("filenames"))
+                        .collect(Collectors.toList()))
+                .build();
+
+        AdapterConfig missingBoth = AdapterConfig.builder().name(adapterConfig.getName())
+                .adapterClass(adapterConfig.getAdapterClass()).configValues(new ArrayList<>()).build();
 
         BeaconAdapter adapter = new VcfBeaconAdapter();
 
@@ -153,7 +157,7 @@ public class VcfBeaconAdapterTest {
         BeaconAlleleResponse response = adapter.getBeaconAlleleResponse(request);
         assertThat(response.getDatasetAlleleResponses()).hasSize(2);
         assertThat(response.getError()).isNull();
-        assertThat(response.getExists()).isTrue();
+        assertThat(response.isExists()).isTrue();
         assertThat(response.getDatasetAlleleResponses().stream().anyMatch(x -> x.getError() != null)).isTrue();
         assertThat(response.getDatasetAlleleResponses()
                            .stream()
@@ -161,12 +165,12 @@ public class VcfBeaconAdapterTest {
                            .count()).isGreaterThan(0);
 
         //In the instancae where a single dataset searched and an error occurs, the error should be propagated to the top level object
-        request.setDatasetIds(Arrays.asList("NON_EXISTANT_DATASET"));
+        request.setDatasetIds(Collections.singletonList("NON_EXISTANT_DATASET"));
         response = adapter.getBeaconAlleleResponse(request);
         assertThat(response.getDatasetAlleleResponses()).hasSize(1);
         assertThat(response.getError()).isNotNull();
         assertThat(response.getError().getErrorCode()).isEqualTo(404);
-        assertThat(response.getExists()).isNull();
+        assertThat(response.isExists()).isNull();
         assertThat(response.getDatasetAlleleResponses().stream().allMatch(x -> x.getError() != null)).isTrue();
 
     }
@@ -181,9 +185,9 @@ public class VcfBeaconAdapterTest {
         for (BeaconAlleleRequest request : beacon.getSampleAlleleRequests()) {
             BeaconAlleleResponse response = adapter.getBeaconAlleleResponse(request);
             assertThat(response.getError()).isNull();
-            assertThat(response.getExists()).isTrue();
+            assertThat(response.isExists()).isTrue();
 
-            BeaconAlleleResponse response2 = adapter.getBeaconAlleleResponse(request.getReferenceName(),
+            BeaconAlleleResponse response2 = adapter.getBeaconAlleleResponse(request.getReferenceName().toString(),
                                                                              request.getStart(),
                                                                              request.getReferenceBases(),
                                                                              request.getAlternateBases(),
@@ -192,7 +196,7 @@ public class VcfBeaconAdapterTest {
                                                                              request.getIncludeDatasetResponses());
 
             assertThat(response2.getError()).isNull();
-            assertThat(response2.getExists()).isTrue();
+            assertThat(response2.isExists()).isTrue();
 
             assertThat(response).isEqualToComparingFieldByField(response2);
         }
@@ -214,9 +218,9 @@ public class VcfBeaconAdapterTest {
         BeaconAlleleResponse response = adapter.getBeaconAlleleResponse(request);
 
         assertThat(response.getError()).isNull();
-        assertThat(response.getExists()).isTrue();
-        assertThat(response.getDatasetAlleleResponses().stream().filter(x -> x.getExists()).count()).isEqualTo(1);
-        assertThat(response.getDatasetAlleleResponses().stream().filter(x -> !x.getExists()).count()).isEqualTo(1);
+        assertThat(response.isExists()).isTrue();
+        assertThat(response.getDatasetAlleleResponses().stream().filter(BeaconDatasetAlleleResponse::isExists).count()).isEqualTo(1);
+        assertThat(response.getDatasetAlleleResponses().stream().filter(x -> !x.isExists()).count()).isEqualTo(1);
         assertThat(response.getDatasetAlleleResponses().stream().allMatch(x -> x.getError() == null)).isTrue();
 
     }

@@ -6,7 +6,7 @@
 
     <groupId>com.dnastack</groupId>
     <artifactId>beacon-adapter-vcf</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>beacon-adapter-vcf</name>
@@ -42,7 +42,7 @@
         <dependency>
             <groupId>com.dnastack</groupId>
             <artifactId>beacon-adapter-api</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.github.samtools</groupId>

@@ -53,7 +53,7 @@
             "datasetIds": [
                 "vcf-test-gt"
             ],
-            "includeDatasetResponses": true
+            "includeDatasetResponses": "ALL"
         },
         {
             "referenceName": "1",
@@ -64,7 +64,7 @@
             "datasetIds": [
                 "vcf-test-no-gt"
             ],
-            "includeDatasetResponses": true
+            "includeDatasetResponses": "ALL"
         }
     ]
 }
