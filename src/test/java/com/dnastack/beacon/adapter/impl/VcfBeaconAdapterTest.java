@@ -12,7 +12,6 @@ import org.junit.Test;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -187,7 +186,7 @@ public class VcfBeaconAdapterTest {
             assertThat(response.getError()).isNull();
             assertThat(response.isExists()).isTrue();
 
-            BeaconAlleleResponse response2 = adapter.getBeaconAlleleResponse(request.getReferenceName().toString(),
+            BeaconAlleleResponse response2 = adapter.getBeaconAlleleResponse(request.getReferenceName(),
                                                                              request.getStart(),
                                                                              request.getReferenceBases(),
                                                                              request.getAlternateBases(),

@@ -178,7 +178,7 @@ public class VcfBeacon {
      * @param includeDatasetResponses shoudl the dataset responses be included in the final response object
      * @return Beacon Allele Response with existence of variant
      */
-    public BeaconAlleleResponse search(String referenceName, Long start, String referenceBases, String alternateBases, String assemblyId, List<String> datasetIds, BeaconAlleleRequest.IncludeDatasetResponsesEnum includeDatasetResponses) {
+    public BeaconAlleleResponse search(Chromosome referenceName, Long start, String referenceBases, String alternateBases, String assemblyId, List<String> datasetIds, BeaconAlleleRequest.IncludeDatasetResponsesEnum includeDatasetResponses) {
 
         BeaconError error = null;
         if (referenceName == null) {
@@ -213,7 +213,7 @@ public class VcfBeacon {
         }
 
         BeaconAlleleRequest request = new BeaconAlleleRequest();
-        request.setReferenceName(Chromosome.fromValue(referenceName));
+        request.setReferenceName(referenceName);
         request.setStart(start);
         request.setReferenceBases(referenceBases);
         request.setAlternateBases(alternateBases);
