@@ -25,6 +25,8 @@ package com.dnastack.beacon.adapter.vcf;
 
 import htsjdk.samtools.util.CloseableIterator;
 import htsjdk.variant.variantcontext.Allele;
+import htsjdk.variant.variantcontext.Genotype;
+import htsjdk.variant.variantcontext.StructuralVariantType;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
 import htsjdk.variant.vcf.VCFHeader;
@@ -37,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * VcfDataset
@@ -119,14 +122,12 @@ class VcfDataset {
      */
     public BeaconDatasetAlleleResponse search(BeaconAlleleRequest request) {
 
-        Allele ref = Allele.create(request.getReferenceBases(), true);
-        Allele alt = Allele.create(request.getAlternateBases(), false);
-
         BeaconDatasetAlleleResponse response = new BeaconDatasetAlleleResponse();
         response.setDatasetId(dataset.getId());
 
         //Ensure the request assembly matches the assembly for this dataset
-        if (!request.getAssemblyId().equals(dataset.getAssemblyId())) {
+        //Invalidate if assemblyId is null
+        if (request.getAssemblyId() == null || !request.getAssemblyId().equals(dataset.getAssemblyId())) {
             BeaconError error = new BeaconError();
             error.setErrorCode(400);
             error.setErrorMessage("Invalid Assembly");
@@ -134,50 +135,91 @@ class VcfDataset {
             return response;
         }
 
-        //Set the intial exists status
+        //Set the initial exists status
         response.setExists(false);
-
-        //determine the offest for the end
-        int offset = request.getAlternateBases().length() > request.getReferenceBases().length()
-                     ? request.getAlternateBases().length()
-                     : request.getAlternateBases().length();
-
-        CloseableIterator<VariantContext> context = reader.query(request.getReferenceName().toString(),
-                                                                 request.getStart().intValue(),
-                                                                 request.getStart().intValue() + offset);
 
         long variantCount = 0;
         long callCount = 0;
         long sampleCount = 0;
         int count = 0;
 
-        //Cycle over the results
-        while (context.hasNext()) {
-            VariantContext variantContext = context.next();
-            count++;
-            //For each rresult from the query, determine if the ref / alt allele match the search criteria
-            if (variantContext.getReference().basesMatch(ref) && variantContext.getAlternateAlleles()
-                                                                               .stream()
-                                                                               .anyMatch(a -> a.basesMatch(alt))) {
+        // if true, search for structure variants, otherwise snv
+        if (request.getEnd() != null && request.getVariantType() != null) {
+            StructuralVariantType variantType = StructuralVariantType.valueOf(request.getVariantType());
 
-                //If there is no genotyping data it is enough that the allele shows in the Alt Column
-                if (!header.hasGenotypingData()) {
-                    response.setExists(true);
-                    variantCount++;
-                    callCount++;
-                    //Do any of the samples contain the variant
-                } else {
-                    Long numMatches = variantContext.getGenotypes()
-                                                    .stream()
-                                                    .map(g -> g.getGenotypeString())
-                                                    .filter(s -> matchGenotypeString(request.getAlternateBases(), s))
-                                                    .count();
+            CloseableIterator<VariantContext> context = reader.query(request.getReferenceName().toString(),
+                    request.getStart().intValue(), request.getEnd().intValue());
 
-                    if (numMatches > 0) {
+            //Cycle over the results
+            while (context.hasNext()) {
+                VariantContext variantContext = context.next();
+                count++;
+
+                // search for sv
+                if (variantContext.getStructuralVariantType() == variantType && variantContext.getEnd() == request.getEnd()) {
+                    //If there is no genotyping data it is enough that the allele shows in the Alt Column
+                    if (!header.hasGenotypingData()) {
                         response.setExists(true);
                         variantCount++;
                         callCount++;
-                        sampleCount += numMatches;
+                        //Do any of the samples contain the variant
+                    } else {
+                        Long numMatches = variantContext.getGenotypes()
+                            .stream()
+                            .map(Genotype::getAlleles)
+                            .filter(alleles -> alleles.stream().anyMatch(a -> a.isCalled() && a.isNonReference()))
+                            .count();
+
+                        if (numMatches > 0) {
+                            response.setExists(true);
+                            variantCount++;
+                            callCount++;
+                            sampleCount += numMatches;
+                        }
+                    }
+                }
+            }
+        } else {
+            Allele ref = Allele.create(request.getReferenceBases(), true);
+            Allele alt = Allele.create(request.getAlternateBases(), false);
+
+            //determine the offset for the end
+            int offset = request.getAlternateBases().length() > request.getReferenceBases().length()
+                    ? request.getAlternateBases().length()
+                    : request.getAlternateBases().length();
+
+            CloseableIterator<VariantContext> context = reader.query(request.getReferenceName().toString(),
+                    request.getStart().intValue(),
+                    request.getStart().intValue() + offset);
+
+            //Cycle over the results
+            while (context.hasNext()) {
+                VariantContext variantContext = context.next();
+                count++;
+                //For each result from the query, determine if the ref / alt allele match the search criteria
+                if (variantContext.getReference().basesMatch(ref) && variantContext.getAlternateAlleles()
+                        .stream()
+                        .anyMatch(a -> a.basesMatch(alt))) {
+
+                    //If there is no genotyping data it is enough that the allele shows in the Alt Column
+                    if (!header.hasGenotypingData()) {
+                        response.setExists(true);
+                        variantCount++;
+                        callCount++;
+                        //Do any of the samples contain the variant
+                    } else {
+                        Long numMatches = variantContext.getGenotypes()
+                                .stream()
+                                .map(Genotype::getGenotypeString)
+                                .filter(s -> matchGenotypeString(request.getAlternateBases(), s))
+                                .count();
+
+                        if (numMatches > 0) {
+                            response.setExists(true);
+                            variantCount++;
+                            callCount++;
+                            sampleCount += numMatches;
+                        }
                     }
                 }
             }
@@ -187,7 +229,7 @@ class VcfDataset {
             response.setCallCount(callCount);
             if (header.hasGenotypingData()) {
                 response.setSampleCount(sampleCount);
-                response.setFrequency(BigDecimal.valueOf(sampleCount).divide(BigDecimal.valueOf(header.getNGenotypeSamples())));
+                response.setFrequency(BigDecimal.valueOf((float) sampleCount / header.getNGenotypeSamples()));
             }
 
         }

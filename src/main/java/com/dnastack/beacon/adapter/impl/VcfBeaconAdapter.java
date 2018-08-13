@@ -171,15 +171,21 @@ public class VcfBeaconAdapter implements BeaconAdapter {
     }
 
     @Override
-    public BeaconAlleleResponse getBeaconAlleleResponse(Chromosome referenceName, Long start, String referenceBases, String alternateBases, String assemblyId, List<String> datasetIds, BeaconAlleleRequest.IncludeDatasetResponsesEnum includeDatasetResponses) throws BeaconException {
+    public BeaconAlleleResponse getBeaconAlleleResponse(Chromosome referenceName, Long start, Integer startMin, Integer startMax, Integer end, Integer endMin, Integer endMax, String referenceBases, String alternateBases, String variantType, String assemblyId, List<String> datasetIds, BeaconAlleleRequest.IncludeDatasetResponsesEnum includeDatasetResponses) throws BeaconException {
         checkAdapterInit();
         return vcfBeacon.search(referenceName,
-                                start,
-                                referenceBases,
-                                alternateBases,
-                                assemblyId,
-                                datasetIds,
-                                includeDatasetResponses);
+                start,
+                startMin,
+                startMax,
+                end,
+                endMin,
+                endMax,
+                referenceBases,
+                alternateBases,
+                variantType,
+                assemblyId,
+                datasetIds,
+                includeDatasetResponses);
     }
 
     @Override
