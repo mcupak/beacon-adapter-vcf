@@ -245,7 +245,7 @@ public class VcfBeaconAdapterTest {
         request.setStart(76962L);
         request.setReferenceBases("T");
         request.setAlternateBases("C");
-        request.setDatasetIds(Arrays.asList("vcf-test-gt", "vcf-test-no-gt", "vcf-test-sv"));
+        request.setDatasetIds(null); // means that all datasets must be queried
         request.setAssemblyId("grch37");
 
         BeaconAlleleResponse response;

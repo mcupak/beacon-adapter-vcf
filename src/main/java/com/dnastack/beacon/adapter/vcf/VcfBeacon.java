@@ -260,12 +260,9 @@ public class VcfBeacon {
         }
         BeaconAlleleResponse response = createResponse(request);
 
-        if (request.getDatasetIds().size() == 0) {
-            BeaconError error = new BeaconError();
-            error.setErrorCode(500);
-            error.setErrorMessage("No datasets defined. At least one dataset must be defined");
-            response.setError(error);
-            return response;
+        // query all datasets when missing datasetIds
+        if (request.getDatasetIds() == null || request.getDatasetIds().size() == 0) {
+            request.setDatasetIds(beacon.getDatasets().stream().map(BeaconDataset::getId).collect(Collectors.toList()));
         }
         List<BeaconDatasetAlleleResponse> datasetRespones = request.getDatasetIds()
                                                                    .stream()
