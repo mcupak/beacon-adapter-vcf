@@ -199,21 +199,18 @@ public class VcfBeacon {
         if (referenceName == null) {
             error = new BeaconError();
             error.setErrorMessage("Reference name cannot be null");
-        } else if (start == null || start < 0) {
+        } else if ((start == null || start < 0) && (startMin == null || startMin < 0)) {
             error = new BeaconError();
-            error.setErrorMessage("Start cannot be null or less then 0");
+            error.setErrorMessage("Both start and minimum start cannot be null or less then 0");
         } else if (referenceBases == null) {
             error = new BeaconError();
             error.setErrorMessage("Reference bases cannot be null");
         } else if (variantType == null && alternateBases == null) {
             error = new BeaconError();
-            error.setErrorMessage("Alternate bases cannot be null");
+            error.setErrorMessage("Both alternate bases and variant type cannot be null");
         } else if (assemblyId == null) {
             error = new BeaconError();
             error.setErrorMessage("Assembly Id cannot be null");
-        } else if (datasetIds == null || datasetIds.size() == 0) {
-            error = new BeaconError();
-            error.setErrorMessage("DatasetIds cannot be null and must include at lesat 1 id");
         }
 
         if (error != null) {

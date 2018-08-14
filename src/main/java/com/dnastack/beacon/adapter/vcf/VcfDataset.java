@@ -36,10 +36,7 @@ import org.ga4gh.beacon.*;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * VcfDataset
@@ -143,43 +140,8 @@ class VcfDataset {
         long sampleCount = 0;
         int count = 0;
 
-        // if true, search for structure variants, otherwise snv
-        if (request.getEnd() != null && request.getVariantType() != null) {
-            StructuralVariantType variantType = StructuralVariantType.valueOf(request.getVariantType());
-
-            CloseableIterator<VariantContext> context = reader.query(request.getReferenceName().toString(),
-                    request.getStart().intValue(), request.getEnd().intValue());
-
-            //Cycle over the results
-            while (context.hasNext()) {
-                VariantContext variantContext = context.next();
-                count++;
-
-                // search for sv
-                if (variantContext.getStructuralVariantType() == variantType && variantContext.getEnd() == request.getEnd()) {
-                    //If there is no genotyping data it is enough that the allele shows in the Alt Column
-                    if (!header.hasGenotypingData()) {
-                        response.setExists(true);
-                        variantCount++;
-                        callCount++;
-                        //Do any of the samples contain the variant
-                    } else {
-                        Long numMatches = variantContext.getGenotypes()
-                            .stream()
-                            .map(Genotype::getAlleles)
-                            .filter(alleles -> alleles.stream().anyMatch(a -> a.isCalled() && a.isNonReference()))
-                            .count();
-
-                        if (numMatches > 0) {
-                            response.setExists(true);
-                            variantCount++;
-                            callCount++;
-                            sampleCount += numMatches;
-                        }
-                    }
-                }
-            }
-        } else {
+        if (request.getStart() != null && request.getAlternateBases() != null) {
+            // query for SNVs
             Allele ref = Allele.create(request.getReferenceBases(), true);
             Allele alt = Allele.create(request.getAlternateBases(), false);
 
@@ -223,7 +185,75 @@ class VcfDataset {
                     }
                 }
             }
+        } else if (request.getStart() != null && request.getEnd() != null && request.getVariantType() != null) {
+            // query for exactly determined structural changes
+            StructuralVariantType variantType = StructuralVariantType.valueOf(request.getVariantType());
+            CloseableIterator<VariantContext> context = reader.query(request.getReferenceName().toString(),
+                    request.getStart().intValue(), request.getEnd().intValue());
+            //Cycle over the results
+            while (context.hasNext()) {
+                VariantContext variantContext = context.next();
+                count++;
+
+                if (variantContext.getStructuralVariantType() == variantType && variantContext.getEnd() == request.getEnd()) {
+                    //If there is no genotyping data it is enough that the allele shows in the Alt Column
+                    if (!header.hasGenotypingData()) {
+                        response.setExists(true);
+                        variantCount++;
+                        callCount++;
+                    } else {
+                        Long numMatches = variantContext.getGenotypes().stream()
+                                .map(Genotype::getAlleles)
+                                .filter(alleles -> alleles.stream().anyMatch(a -> a.isCalled() && a.isNonReference()))
+                                .count();
+                        if (numMatches > 0) {
+                            response.setExists(true);
+                            variantCount++;
+                            callCount++;
+                            sampleCount += numMatches;
+                        }
+                    }
+                }
+            }
+        } else if (request.getStartMin() != null && request.getStartMax() != null && request.getEndMin() != null && request.getEndMax() != null && request.getVariantType() != null && request.getStartMin() <= request.getStartMax() && request.getStartMin() <= request.getEndMin() && request.getEndMin() <= request.getEndMax()) {
+            // query for structural variants at imprecise positions
+            StructuralVariantType variantType = StructuralVariantType.valueOf(request.getVariantType());
+            CloseableIterator<VariantContext> context = reader.query(request.getReferenceName().toString(),
+                    request.getStartMin().intValue(), request.getStartMax().intValue());
+            while (context.hasNext()) {
+                VariantContext variantContext = context.next();
+                count++;
+                if (variantContext.getStructuralVariantType() == variantType && request.getEndMin() <= variantContext.getEnd() && variantContext.getEnd() <= request.getEndMax()) {
+                    if (!header.hasGenotypingData()) {
+                        response.setExists(true);
+                        variantCount++;
+                        callCount++;
+                        //Do any of the samples contain the variant
+                    } else {
+                        Long numMatches = variantContext.getGenotypes()
+                                .stream()
+                                .map(Genotype::getAlleles)
+                                .filter(alleles -> alleles.stream().anyMatch(a -> a.isCalled() && a.isNonReference()))
+                                .count();
+
+                        if (numMatches > 0) {
+                            response.setExists(true);
+                            variantCount++;
+                            callCount++;
+                            sampleCount += numMatches;
+                        }
+                    }
+                }
+            }
+
+        } else {
+            BeaconError error = new BeaconError();
+            error.setErrorCode(400);
+            error.setErrorMessage("Invalid query");
+            response.setError(error);
+            return response;
         }
+
         if (response.isExists()) {
             response.setVariantCount(variantCount);
             response.setCallCount(callCount);
