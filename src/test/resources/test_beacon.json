@@ -41,6 +41,18 @@
             "variantCount": 46,
             "sampleCount": 0,
             "externalUrl": "www.external.com"
+        },
+        {
+            "id": "vcf-test-sv",
+            "name": "vcf-test-sv",
+            "description": "Vcf Adapter test dataset which includes structural variants",
+            "assemblyId": "NCBI36",
+            "createDateTime": "1018/07/5 19:12:00",
+            "updateDateTime": "2018/07/5 19:12:00",
+            "version": "1",
+            "variantCount": 6,
+            "sampleCount": 1,
+            "externalUrl": "www.external.com"
         }
     ],
     "sampleAlleleRequests": [
@@ -53,7 +65,7 @@
             "datasetIds": [
                 "vcf-test-gt"
             ],
-            "includeDatasetResponses": true
+            "includeDatasetResponses": "ALL"
         },
         {
             "referenceName": "1",
@@ -64,7 +76,44 @@
             "datasetIds": [
                 "vcf-test-no-gt"
             ],
-            "includeDatasetResponses": true
+            "includeDatasetResponses": "ALL"
+        },
+        {
+            "referenceName": "1",
+            "start": 2827694,
+            "end": 2827708,
+            "referenceBases": "CGTGGATGCGGGGAC",
+            "variantType": "DEL",
+            "assemblyId": "NCBI36",
+            "datasetIds": [
+                "vcf-test-sv"
+            ],
+            "includeDatasetResponses": "ALL"
+        },
+        {
+            "referenceName": "2",
+            "startMin": 321600,
+            "startMax": 321700,
+            "endMin": 321800,
+            "endMax": 321900,
+            "referenceBases": "N",
+            "variantType": "DEL",
+            "assemblyId": "NCBI36",
+            "datasetIds": [
+                "vcf-test-sv"
+            ],
+            "includeDatasetResponses": "ALL"
+        },
+        {
+            "referenceName": "2",
+            "startMin": 321682,
+            "startMax": 14477084,
+            "endMin": 321887,
+            "endMax": 14477381,
+            "referenceBases": "N",
+            "variantType": "DEL",
+            "assemblyId": "NCBI36",
+            "includeDatasetResponses": "ALL"
         }
     ]
 }

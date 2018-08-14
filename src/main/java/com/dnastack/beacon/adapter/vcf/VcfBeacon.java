@@ -103,7 +103,7 @@ public class VcfBeacon {
             response = new BeaconDatasetAlleleResponse();
             BeaconError error = new BeaconError();
             error.setErrorCode(404);
-            error.setMessage("Could not find dataset with id: " + datasetId);
+            error.setErrorMessage("Could not find dataset with id: " + datasetId);
             response.setError(error);
         } else {
             response = dataset.search(request);
@@ -136,12 +136,23 @@ public class VcfBeacon {
             response.setError(datasets.get(0).getError());
             response.setExists(null);
         } else {
-            response.setExists(datasets.stream().anyMatch(r -> r.getExists()));
+            response.setExists(datasets.stream().filter(response1 -> response1.isExists() != null).anyMatch(BeaconDatasetAlleleResponse::isExists));
         }
 
-        if (request.getIncludeDatasetResponses()) {
-            response.setDatasetAlleleResponses(datasets);
+        switch (request.getIncludeDatasetResponses()) {
+            case ALL:
+                response.setDatasetAlleleResponses(datasets);
+                break;
+            case HIT:
+                response.setDatasetAlleleResponses(datasets.stream().filter(response1 -> response1.isExists() != null && response1.isExists()).collect(Collectors.toList()));
+                break;
+            case MISS:
+                response.setDatasetAlleleResponses(datasets.stream().filter(response1 -> response1.isExists() != null && !response1.isExists()).collect(Collectors.toList()));
+                break;
+            default:
+                response.setDatasetAlleleResponses(null);
         }
+
 
         return response;
     }
@@ -167,49 +178,67 @@ public class VcfBeacon {
      * aggregate the results into a single ${@link BeaconAlleleResponse} object indicating whether the variant was found in any of the
      * datasets or if an error was encountered.
      *
-     * @param referenceName           name of contig
+     * @param referenceName           name of the reference
      * @param start                   start position
-     * @param referenceBases          reference bases to search
-     * @param alternateBases          alternate bases to search
-     * @param assemblyId              genome assembly Id
-     * @param datasetIds              list of datasets to search
-     * @param includeDatasetResponses shoudl the dataset responses be included in the final response object
+     * @param startMin                minimum start coordinate
+     * @param startMax                maximum start coordinate
+     * @param end                     precise end coordinate
+     * @param endMin                  minimum end coordinate
+     * @param endMax                  maximum end coordinate
+     * @param referenceBases          reference bases
+     * @param alternateBases          alternate bases
+     * @param variantType             used to denote structural variants
+     * @param assemblyId              genome assembly
+     * @param datasetIds              list of datasetIds
+     * @param includeDatasetResponses include datasets to response object
      * @return Beacon Allele Response with existence of variant
      */
-    public BeaconAlleleResponse search(String referenceName, Long start, String referenceBases, String alternateBases, String assemblyId, List<String> datasetIds, Boolean includeDatasetResponses) {
+    public BeaconAlleleResponse search(Chromosome referenceName, Long start, Integer startMin, Integer startMax, Integer end, Integer endMin, Integer endMax, String referenceBases, String alternateBases, String variantType, String assemblyId, List<String> datasetIds, BeaconAlleleRequest.IncludeDatasetResponsesEnum includeDatasetResponses) {
 
         BeaconError error = null;
         if (referenceName == null) {
-            error = new BeaconError(400, "Reference name cannot be null");
-        } else if (start == null || start < 0) {
-            error = new BeaconError(400, "Start cannot be null or less then 0");
+            error = new BeaconError();
+            error.setErrorMessage("Reference name cannot be null");
+        } else if ((start == null || start < 0) && (startMin == null || startMin < 0)) {
+            error = new BeaconError();
+            error.setErrorMessage("Both start and minimum start cannot be null or less then 0");
         } else if (referenceBases == null) {
-            error = new BeaconError(400, "Reference bases cannot be null");
-        } else if (alternateBases == null) {
-            error = new BeaconError(400, "Alternate bases cannot be null");
+            error = new BeaconError();
+            error.setErrorMessage("Reference bases cannot be null");
+        } else if (variantType == null && alternateBases == null) {
+            error = new BeaconError();
+            error.setErrorMessage("Both alternate bases and variant type cannot be null");
         } else if (assemblyId == null) {
-            error = new BeaconError(400, "Assembly Id cannot be null");
-        } else if (datasetIds == null || datasetIds.size() == 0) {
-            error = new BeaconError(400, "DatasetIds cannot be null and must include at lesat 1 id");
+            error = new BeaconError();
+            error.setErrorMessage("Assembly Id cannot be null");
         }
 
         if (error != null) {
+            error.setErrorCode(400);
             BeaconAlleleResponse response = createResponse(null);
             response.setError(error);
             return response;
         }
 
         if (includeDatasetResponses == null) {
-            includeDatasetResponses = false;
+            includeDatasetResponses = BeaconAlleleRequest.IncludeDatasetResponsesEnum.NONE;
         }
 
-        return search(new BeaconAlleleRequest(referenceName,
-                                              start,
-                                              referenceBases,
-                                              alternateBases,
-                                              assemblyId,
-                                              datasetIds,
-                                              includeDatasetResponses));
+        BeaconAlleleRequest request = new BeaconAlleleRequest();
+        request.setReferenceName(referenceName);
+        request.setStart(start);
+        request.setStartMin(startMin);
+        request.setStartMax(startMax);
+        request.setEnd(end);
+        request.setEndMin(endMin);
+        request.setEndMax(endMax);
+        request.setReferenceBases(referenceBases);
+        request.setAlternateBases(alternateBases);
+        request.setVariantType(variantType);
+        request.setAssemblyId(assemblyId);
+        request.setDatasetIds(datasetIds);
+        request.setIncludeDatasetResponses(includeDatasetResponses);
+        return search(request);
     }
 
     /**
@@ -220,17 +249,17 @@ public class VcfBeacon {
      * datasets or if an error was encountered.
      *
      * @param request request object
-     * @return
+     * @return allele response
      */
     public BeaconAlleleResponse search(BeaconAlleleRequest request) {
         if (request.getIncludeDatasetResponses() == null) {
-            request.setIncludeDatasetResponses(false);
+            request.setIncludeDatasetResponses(BeaconAlleleRequest.IncludeDatasetResponsesEnum.NONE);
         }
         BeaconAlleleResponse response = createResponse(request);
 
-        if (request.getDatasetIds().size() == 0) {
-            response.setError(new BeaconError(500, "No datasets defined. At least one dataset must be defined"));
-            return response;
+        // query all datasets when missing datasetIds
+        if (request.getDatasetIds() == null || request.getDatasetIds().size() == 0) {
+            request.setDatasetIds(beacon.getDatasets().stream().map(BeaconDataset::getId).collect(Collectors.toList()));
         }
         List<BeaconDatasetAlleleResponse> datasetRespones = request.getDatasetIds()
                                                                    .stream()
@@ -239,5 +268,4 @@ public class VcfBeacon {
 
         return finalizeResponse(request, response, datasetRespones);
     }
-
 }
